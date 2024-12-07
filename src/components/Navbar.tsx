@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { MessageSquare, Users } from "lucide-react";
 import { motion } from "framer-motion";
+// import { AddFunds } from "./AddFunds";
 
 export function Navbar() {
   const location = useLocation();
@@ -10,7 +11,7 @@ export function Navbar() {
     <nav className="bg-white shadow-sm">
       <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/chat" className="text-xl font-semibold text-purple-600">
-          VoiceChat AI
+          Voice to Web3
         </Link>
         <div className="flex gap-4">
           <Link
@@ -35,6 +36,7 @@ export function Navbar() {
             <Users size={20} />
             <span>Contacts</span>
           </Link>
+          {/* <AddFunds /> */}
         </div>
       </div>
     </nav>
