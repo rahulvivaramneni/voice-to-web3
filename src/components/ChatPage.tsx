@@ -5,10 +5,12 @@ import { Confetti } from "./Confetti";
 import { QuickActions } from "./QuickActions";
 import { generateUUID } from "../utils/uuid";
 import { speakResponse } from "../utils/speech";
+import { useContacts } from "../contexts/ContactsContext";
 
 const API_URL = "https://onchain-agent-demo-backend.replit.app";
 
 export function ChatPage() {
+  const { contacts } = useContacts();
   const [messages, setMessages] = useState<
     Array<{ text: string; isUser: boolean }>
   >([]);
@@ -52,9 +54,15 @@ export function ChatPage() {
 
   const handleUserInput = async (input: string) => {
     const projectId = "eeaa2500-ba9b-4ffd-9fdb-70635b7da166";
-
     const link = `https://pay.coinbase.com/buy/select-asset?appId=${projectId}&destinationWallets=[{"address":"0x3C9df7A3aa2565F6C891758638FDEeC36fd7D29a","blockchains":["ethereum"]}]&defaultAsset=ETH&defaultPaymentMethod=CARD&fiatCurrency=USD&presetFiatAmount=10&quoteId=ae77980c-f656-4c69-b380-cb5cf99276a9`;
 
+    // Preprocess input to replace contact names with wallet addresses
+    const processedInput = contacts.reduce((text, contact) => {
+      const regex = new RegExp(`\\b${contact.nickname}\\b`, "gi"); // Match full word, case-insensitive
+      return text.replace(regex, contact.walletAddress);
+    }, input);
+
+    console.log("processedInput", processedInput);
     setMessages((prev) => [...prev, { text: input, isUser: true }]);
     setIsTypingMode(false);
 
@@ -77,7 +85,10 @@ export function ChatPage() {
       const response = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input, conversation_id: conversationId }),
+        body: JSON.stringify({
+          input: processedInput,
+          conversation_id: conversationId,
+        }),
       });
 
       const reader = response.body?.getReader();
