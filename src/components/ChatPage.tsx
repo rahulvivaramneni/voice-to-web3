@@ -1,0 +1,153 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { ChatControls } from './ChatControls';
+import { ChatMessage } from './ChatMessage';
+import { Confetti } from './Confetti';
+import { QuickActions } from './QuickActions';
+import { generateUUID } from '../utils/uuid';
+import { speakResponse } from '../utils/speech';
+
+const API_URL = 'https://onchain-agent-demo-backend.replit.app';
+
+export function ChatPage() {
+  const [messages, setMessages] = useState<Array<{ text: string; isUser: boolean }>>([]);
+  const [isListening, setIsListening] = useState(false);
+  const [isMuted, setIsMuted] = useState(typeof window !== 'undefined' && /Mobi|Android/i.test(window.navigator.userAgent));
+  const [isTypingMode, setIsTypingMode] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [conversationId] = useState(generateUUID());
+  const recognition = useRef<any>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window) {
+      recognition.current = new (window as any).webkitSpeechRecognition();
+      recognition.current.continuous = false;
+      recognition.current.interimResults = false;
+
+      recognition.current.onresult = (event: any) => {
+        const text = event.results[0][0].transcript;
+        handleUserInput(text);
+      };
+
+      recognition.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  useEffect(() => {
+    if (isMuted || isListening) {
+      window.speechSynthesis.cancel();
+    }
+  }, [isMuted, isListening]);
+
+  const handleUserInput = async (input: string) => {
+    setMessages(prev => [...prev, { text: input, isUser: true }]);
+    setIsTypingMode(false);
+
+    try {
+      const response = await fetch(`${API_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input, conversation_id: conversationId }),
+      });
+
+      const reader = response.body?.getReader();
+      let partialResponse = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = new TextDecoder().decode(value);
+          const lines = (partialResponse + chunk).split('\n');
+          partialResponse = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.trim()) {
+              try {
+                const parsed = JSON.parse(line);
+                if (parsed.event === 'agent' && parsed.data) {
+                  setMessages(prev => [...prev, { text: parsed.data, isUser: false }]);
+                  await speakResponse(parsed.data, isMuted, isListening);
+                  if (parsed.data.toLowerCase().includes('congratulations')) {
+                    setShowConfetti(true);
+                    setTimeout(() => setShowConfetti(false), 3000);
+                  }
+                }
+              } catch (e) {
+                console.error('Error parsing JSON:', e);
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognition.current?.stop();
+    } else {
+      setIsMuted(true);
+      recognition.current?.start();
+      setIsListening(true);
+      setIsTypingMode(false);
+    }
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    window.speechSynthesis.cancel();
+  };
+
+  const toggleTyping = () => {
+    setIsTypingMode(!isTypingMode);
+    if (isListening) {
+      recognition.current?.stop();
+    }
+  };
+
+  const handleQuickAction = (action: string) => {
+    handleUserInput(action);
+  };
+
+  return (
+    <div className="min-h-[calc(100vh-56px)] bg-gray-50 flex flex-col">
+      <div className="flex-1 max-w-4xl w-full mx-auto overflow-y-auto">
+        {messages.length === 0 ? (
+          <div className="p-4">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4 text-center">
+              Quick Actions
+            </h2>
+            <QuickActions onActionSelect={handleQuickAction} />
+          </div>
+        ) : (
+          <div className="p-4 space-y-4">
+            {messages.map((message, index) => (
+              <ChatMessage key={index} message={message.text} isUser={message.isUser} />
+            ))}
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+      <ChatControls
+        isListening={isListening}
+        isMuted={isMuted}
+        isTypingMode={isTypingMode}
+        onToggleListening={toggleListening}
+        onToggleMute={toggleMute}
+        onToggleTyping={toggleTyping}
+        onSendMessage={handleUserInput}
+      />
+      {showConfetti && <Confetti />}
+    </div>
+  );
+}
