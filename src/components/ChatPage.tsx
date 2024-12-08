@@ -7,7 +7,7 @@ import { generateUUID } from "../utils/uuid";
 import { speakResponse } from "../utils/speech";
 import { useContacts } from "../contexts/ContactsContext";
 
-const API_URL = "https://onchain-agent-demo-backend-1-rahulrao11.replit.app";
+const API_URL = process.env.API_URL;
 
 export function ChatPage() {
   const { contacts } = useContacts();
@@ -53,7 +53,7 @@ export function ChatPage() {
   }, [isMuted, isListening]);
 
   const handleUserInput = async (input: string) => {
-    const projectId = "eeaa2500-ba9b-4ffd-9fdb-70635b7da166";
+    const projectId = process.env.PROJECT_ID;
     const link = `https://pay.coinbase.com/buy/select-asset?appId=${projectId}&destinationWallets=[{"address":"0x3C9df7A3aa2565F6C891758638FDEeC36fd7D29a","blockchains":["ethereum"]}]&defaultAsset=ETH&defaultPaymentMethod=CARD&fiatCurrency=USD&presetFiatAmount=10&quoteId=ae77980c-f656-4c69-b380-cb5cf99276a9`;
 
     // Preprocess input to replace contact names with wallet addresses
