@@ -7,7 +7,7 @@ import { generateUUID } from "../utils/uuid";
 import { speakResponse } from "../utils/speech";
 import { useContacts } from "../contexts/ContactsContext";
 
-const API_URL = "https://onchain-agent-demo-backend.replit.app";
+const API_URL = "https://onchain-agent-demo-backend-1-rahulrao11.replit.app";
 
 export function ChatPage() {
   const { contacts } = useContacts();
@@ -67,7 +67,7 @@ export function ChatPage() {
     setIsTypingMode(false);
 
     // Check if the input contains "on ramp USDC" or "buy USDC"
-    if (/on ramp usdc|buy usdc|buy eth| buy eid| buy/i.test(input)) {
+    if (/onramp usdc|buy usdc|buy eth| buy eid| buy/i.test(input)) {
       const predefinedResponse = `You can buy it from here <a href=${link} target="_blank" class="text-blue-500 underline">this link</a>`;
       setMessages((prev) => [
         ...prev,

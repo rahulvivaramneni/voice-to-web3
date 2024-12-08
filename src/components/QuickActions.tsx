@@ -1,16 +1,16 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Wallet, Coins, ArrowDownToLine, CreditCard } from 'lucide-react';
+import React from "react";
+import { motion } from "framer-motion";
+import { Wallet, Coins, ArrowDownToLine, CreditCard } from "lucide-react";
 
 interface QuickActionProps {
   onActionSelect: (action: string) => void;
 }
 
 const actions = [
-  { id: 1, text: 'My Wallet Address', icon: Wallet },
-  { id: 2, text: 'My Current Balance', icon: Coins },
-  { id: 3, text: 'Top up ETH from faucet', icon: ArrowDownToLine },
-  { id: 4, text: 'On ramp USDC', icon: CreditCard },
+  { id: 1, text: "My Wallet Address", icon: Wallet },
+  { id: 2, text: "My Current Balance", icon: Coins },
+  { id: 3, text: "Top up ETH from faucet", icon: ArrowDownToLine },
+  { id: 4, text: "Onramp USDC", icon: CreditCard },
 ];
 
 export function QuickActions({ onActionSelect }: QuickActionProps) {
